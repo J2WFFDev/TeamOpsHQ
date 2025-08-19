@@ -1,10 +1,13 @@
 "use client";
 import React from 'react'
 import { createTeam } from './actions'
-import { useFormState } from 'react-dom'
+
+type ActionResult = { ok?: boolean; error?: string }
+type ActionFn = (...args: unknown[]) => Promise<ActionResult | undefined>
 
 export default function ClientCreateTeamForm({ programs }: { programs: { id: string; name: string }[] }) {
-  const [state, formAction] = useFormState(createTeam, null)
+  const [stateRaw, formAction] = React.useActionState(createTeam as ActionFn, null)
+  const state = stateRaw as ActionResult | undefined
   return (
     <form action={formAction} className="flex gap-2 items-end">
       <label className="flex flex-col">

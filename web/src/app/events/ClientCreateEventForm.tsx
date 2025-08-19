@@ -1,10 +1,13 @@
 "use client";
 import React from 'react'
 import { createEvent } from './actions'
-import { useFormState } from 'react-dom'
+
+type ActionResult = { ok?: boolean; error?: string }
+type ActionFn = (...args: unknown[]) => Promise<ActionResult | undefined>
 
 export default function ClientCreateEventForm({ teams }: { teams: { id: string; name: string }[] }) {
-  const [state, formAction] = useFormState(createEvent, null)
+  const [stateRaw, formAction] = React.useActionState(createEvent as ActionFn, null)
+  const state = stateRaw as ActionResult | undefined
   const now = new Date().toISOString().slice(0,16) // yyyy-MM-ddTHH:mm
   const later = new Date(Date.now() + 60*60*1000).toISOString().slice(0,16)
   return (
