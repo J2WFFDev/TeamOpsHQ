@@ -1,0 +1,83 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"               // <- change to "mysql" if you prefer MySQL now
+  url      = env("DATABASE_URL")    // SQLite: file:./dev.db | MySQL: mysql://user:pass@host:3306/db
+}
+
+enum Role {
+  PARENT
+  COACH
+  ADMIN
+}
+
+model User {
+  id          String       @id @default(cuid())
+  email       String       @unique
+  name        String?
+  role        Role         @default(PARENT)
+  password    String
+  createdAt   DateTime     @default(now())
+
+  memberships Membership[]
+  athletes    Athlete[]
+}
+
+model Program {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+
+  teams     Team[]
+}
+
+model Team {
+  id          String       @id @default(cuid())
+  name        String       @unique
+  createdAt   DateTime     @default(now())
+  programId   String?
+
+  program     Program?     @relation(fields: [programId], references: [id], onDelete: Cascade)
+  memberships Membership[]
+  athletes    Athlete[]
+  events      Event[]
+}
+
+model Membership {
+  id        String   @id @default(cuid())
+  userId    String
+  teamId    String
+  role      Role     @default(PARENT)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, teamId])
+}
+
+model Athlete {
+  id        String   @id @default(cuid())
+  firstName String
+  lastName  String?
+  teamId    String?
+  parentId  String?
+  createdAt DateTime @default(now())
+
+  team   Team? @relation(fields: [teamId], references: [id])
+  parent User? @relation(fields: [parentId], references: [id])
+}
+
+model Event {
+  id       String   @id @default(cuid())
+  teamId   String
+  team     Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  title    String
+  startsAt DateTime
+  endsAt   DateTime
+  location String?
+  notes    String?
+}

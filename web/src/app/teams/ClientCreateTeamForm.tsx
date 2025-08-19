@@ -1,0 +1,25 @@
+"use client";
+import React from 'react'
+import { createTeam } from './actions'
+import { useFormState } from 'react-dom'
+
+export default function ClientCreateTeamForm({ programs }: { programs: { id: string; name: string }[] }) {
+  const [state, formAction] = useFormState(createTeam, null)
+  return (
+    <form action={formAction} className="flex gap-2 items-end">
+      <label className="flex flex-col">
+        <span className="text-sm text-gray-600">Program</span>
+        <select name="programId" className="border rounded px-2 py-1">
+          {programs.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+        </select>
+      </label>
+      <label className="flex flex-col">
+        <span className="text-sm text-gray-600">Team name</span>
+        <input name="name" className="border rounded px-2 py-1" placeholder="Rifle C" />
+      </label>
+      <button className="rounded bg-black text-white px-3 py-2">Create</button>
+      {state?.error && <span className="text-red-600">{state.error}</span>}
+      {state?.ok && <span className="text-green-700">Created.</span>}
+    </form>
+  )
+}

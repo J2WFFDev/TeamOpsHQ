@@ -1,0 +1,14 @@
+# Node / general
+node_modules
+dist
+build
+.DS_Store
+
+# Editor
+.vscode
+*.log
+
+# Secrets / local env
+.env
+.env.local
+.env.*.local
