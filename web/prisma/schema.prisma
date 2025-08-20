@@ -109,4 +109,24 @@ model Note {
   decisionRationale String?
   decisionOutcome String?
   updatedAt DateTime @updatedAt
+  version   Int      @default(1)
+
+  mediaAttachments MediaAttachment[]
+
+  @@index([athleteId])
+  @@index([type, status])
+}
+
+model MediaAttachment {
+  id         String   @id @default(cuid())
+  itemId     String? 
+  path       String
+  mime       String?
+  size       Int?
+  uploadedAt DateTime @default(now())
+  uploaderId String?
+
+  item Note? @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@index([itemId])
 }

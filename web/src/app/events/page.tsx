@@ -1,9 +1,11 @@
 import { prisma } from '@/lib/prisma'
+import type { Event, Team } from '@prisma/client'
 import ClientCreateEventForm from './ClientCreateEventForm'
+import QuickNote from '@/components/QuickNote'
 
 export const dynamic = 'force-dynamic'
 
-async function getData() {
+async function getData(): Promise<{ teams: Team[]; events: (Event & { team: Team })[] }> {
   const teams = await prisma.team.findMany({ orderBy: { name: 'asc' } })
   const events = await prisma.event.findMany({
     include: { team: true },
@@ -23,10 +25,12 @@ export default async function EventsPage() {
         <ClientCreateEventForm teams={teams} />
       </div>
 
+  <QuickNote />
+
       <div className="bg-white rounded-xl shadow p-4">
         <h2 className="font-semibold mb-3">Upcoming</h2>
         <ul className="divide-y">
-          {events.map(ev => (
+          {events.map((ev: Event & { team: Team }) => (
             <li key={ev.id} className="py-2">
               <div className="font-medium">{ev.title}</div>
               <div className="text-sm text-gray-600">

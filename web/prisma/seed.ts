@@ -1,6 +1,5 @@
 // prisma/seed.ts
-import { PrismaClient, Role } from "@prisma/client";
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/prisma";
 
 async function main() {
   // Team
@@ -14,10 +13,10 @@ async function main() {
   const user = await prisma.user.upsert({
     where: { email: "parent@example.com" },
     update: {},
-    create: {
+      create: {
       email: "parent@example.com",
       name: "Pat Parent",
-      role: Role.PARENT,
+      role: 'PARENT',
       password: "hashed_dummy", // TODO: replace with real hash later
     },
   });
@@ -26,7 +25,7 @@ async function main() {
   await prisma.membership.upsert({
     where: { userId_teamId: { userId: user.id, teamId: team.id } },
     update: {},
-    create: { userId: user.id, teamId: team.id, role: Role.PARENT },
+  create: { userId: user.id, teamId: team.id, role: 'PARENT' },
   });
 
   // Athlete

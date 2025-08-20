@@ -1,10 +1,9 @@
-
-
-const config = {
-  plugins: ['@tailwindcss/postcss', 'autoprefixer'],
-};
-
-import tailwindcss from '@tailwindcss/postcss';
-import autoprefixer from 'autoprefixer';
-
-export default config;
+// Next.js expects PostCSS plugins to be specified by name (string) in the
+// configuration so the build system can resolve them. Use the object form
+// mapping plugin names to their options.
+export default {
+  plugins: {
+  '@tailwindcss/postcss': {},
+    autoprefixer: {},
+  },
+}
