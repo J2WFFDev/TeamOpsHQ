@@ -14,6 +14,19 @@ enum Role {
   ADMIN
 }
 
+enum ItemType {
+  NOTE
+  TASK
+  JOURNAL
+  DECISION
+}
+
+enum ItemStatus {
+  NEW
+  REVIEWED
+  DONE
+}
+
 model User {
   id          String       @id @default(cuid())
   email       String       @unique
@@ -80,4 +93,20 @@ model Event {
   endsAt   DateTime
   location String?
   notes    String?
+}
+
+model Note {
+  id        String   @id @default(cuid())
+  athleteId String?
+  text      String
+  createdAt DateTime @default(now())
+  mediaPath String?
+  type      ItemType  @default(NOTE)
+  status    ItemStatus @default(NEW)
+  tags      String?
+  dueDate   DateTime?
+  assignedTo String?
+  decisionRationale String?
+  decisionOutcome String?
+  updatedAt DateTime @updatedAt
 }
