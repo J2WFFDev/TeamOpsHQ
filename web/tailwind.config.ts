@@ -14,7 +14,9 @@ const config: Config = {
       'desktop': '1024px'
     }
   },
-  plugins: []
+  plugins: [
+    require('@tailwindcss/forms'),
+  ]
 }
 
 export default config

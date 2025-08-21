@@ -7,7 +7,7 @@ export async function POST(req: Request) {
     const actions = body.actions || []
     const applied: number[] = []
 
-    for (const a of actions) {
+  for (const a of actions) {
       // simple action shape: { id, type, payload, createdAt }
       if (a.type === 'create_note' || a.type === 'create_item') {
         try {
@@ -22,16 +22,20 @@ export async function POST(req: Request) {
       const tags = payload.tags ? (Array.isArray(payload.tags) ? payload.tags.join(',') : String(payload.tags)) : null
       const decisionRationale = payload.decisionRationale || null
       const decisionOutcome = payload.decisionOutcome || null
-      // Persist into the new Note model
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const note = await prisma.note.create({ data: { athleteId, text, createdAt: new Date(a.createdAt), mediaPath, type: itemType as any, status: 'NEW', tags, dueDate: dueDate as any, assignedTo, decisionRationale, decisionOutcome } as any })
+  // Persist as an Element (note/item) and attach attachments
+  const { getPrisma } = await import('@/lib/getPrisma')
+  const p = getPrisma()
+  const element = await p.element.create({ data: {
+        type: (itemType || 'note').toLowerCase(),
+        title: text?.slice(0, 120) || null,
+        detailsJson: { $type: (itemType || 'note').toLowerCase(), $v: 1, body_md: text },
+        createdBy: 1,
+        createdAt: new Date(a.createdAt)
+      } })
 
-      // If there are attachment IDs recorded from the upload step, link them to this note
+      // Link attachments to the element
       if (attachmentIds && attachmentIds.length) {
-        // prisma client may not have typed property for mediaAttachment in generated types here; use any to be safe
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const p = prisma as any
-        await p.mediaAttachment.updateMany({ where: { id: { in: attachmentIds } }, data: { itemId: note.id } })
+        await p.attachment.updateMany({ where: { id: { in: attachmentIds } }, data: { elementId: element.id } })
       }
       applied.push(a.id)
         } catch (err) {

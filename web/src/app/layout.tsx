@@ -18,6 +18,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             <Link href="/dashboard">Dashboard</Link>
             <Link href="/teams">Teams</Link>
             <Link href="/events">Events</Link>
+            <Link href="/gallery">Gallery</Link>
+            <Link href="/signin">Sign in</Link>
           </nav>
         </header>
         <main className="mx-auto max-w-5xl p-6">{children}</main>

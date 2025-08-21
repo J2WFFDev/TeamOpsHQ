@@ -38,20 +38,33 @@ export default function QuickNote() {
 
   async function saveOffline(e?: React.FormEvent) {
     if (e) e.preventDefault()
-      if (!text.trim()) return
-      const createdAt = Date.now()
-    // Add note record (mediaPath will be set after upload)
-    await db.notes.add({ athleteId: athleteId || 'unspecified', text: text.trim(), createdAt, synced: false, mediaPath: null, type: itemType, status: 'NEW', tags: tags ? tags.split(',').map(t=>t.trim()): [] , dueDate: dueDate ? Date.parse(dueDate) : null, assignedTo: assignedTo || null })
+    if (!text.trim()) return
+    const createdAt = Date.now()
 
-  // If there's a selected file stored as a blob in IndexedDB, attach its id to the pending action
-  let attachmentId: number | null = null
-  if (fileBlobRef.current) {
-    const blob = fileBlobRef.current
-    const att = { noteCreatedAt: createdAt, name: fileNameRef.current || 'photo.jpg', type: blob.type || 'image/jpeg', blob, createdAt, uploaded: false, mediaPath: null }
-    attachmentId = await db.mediaAttachments.add(att)
-  }
+    // Add an element record (client-side local element)
+    const elementLocalId = await db.elements.add({
+      athleteId: athleteId || 'unspecified',
+      text: text.trim(),
+      createdAt,
+      synced: false,
+      mediaPath: null,
+      type: itemType,
+      status: 'NEW',
+      tags: tags ? tags.split(',').map(t => t.trim()) : [],
+      dueDate: dueDate ? Date.parse(dueDate) : null,
+      assignedTo: assignedTo || null
+    })
 
-  await db.pendingActions.add({ type: 'create_item', payload: { athleteId: athleteId || null, text, noteCreatedAt: createdAt, attachmentId, itemType, dueDate: dueDate ? Date.parse(dueDate): null, assignedTo: assignedTo || null, tags: tags ? tags.split(',').map(t=>t.trim()): [] }, createdAt })
+    // If there's a selected file stored as a blob in IndexedDB, attach its id to the pending action
+    let attachmentId: number | null = null
+    if (fileBlobRef.current) {
+      const blob = fileBlobRef.current
+      const att = { noteCreatedAt: createdAt, elementLocalId, name: fileNameRef.current || 'photo.jpg', type: blob.type || 'image/jpeg', blob, createdAt, uploaded: false, mediaPath: null }
+      attachmentId = await db.attachments.add(att)
+    }
+
+    // Payload matches server-side sync route which expects create_item actions
+    await db.pendingActions.add({ type: 'create_item', payload: { athleteId: athleteId || null, text, elementLocalId, noteCreatedAt: createdAt, attachmentId, itemType, dueDate: dueDate ? Date.parse(dueDate) : null, assignedTo: assignedTo || null, tags: tags ? tags.split(',').map(t => t.trim()) : [] }, createdAt })
     try {
       const { registerBgSync } = await import('@/lib/sync')
       registerBgSync()

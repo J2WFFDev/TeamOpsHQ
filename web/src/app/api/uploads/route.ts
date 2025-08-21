@@ -23,11 +23,14 @@ export async function POST(req: Request) {
 
     const mediaPath = `/uploads/${filename}`
 
-    // Persist metadata in MediaAttachment
-    const attachment = await prisma.mediaAttachment.create({ data: {
-      path: mediaPath,
-      mime: file.type || null,
-      size: buffer.length,
+    // Persist metadata in Attachment
+  const { getPrisma } = await import('@/lib/getPrisma')
+  const p = getPrisma()
+  const attachment = await p.attachment.create({ data: {
+      urlOrPath: mediaPath,
+      mime: file.type || '',
+      sizeBytes: buffer.length,
+      name: file.name
     }})
 
     return NextResponse.json({ mediaPath, attachmentId: attachment.id })

@@ -4,129 +4,482 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"               // <- change to "mysql" if you prefer MySQL now
-  url      = env("DATABASE_URL")    // SQLite: file:./dev.db | MySQL: mysql://user:pass@host:3306/db
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
 }
 
-enum Role {
-  PARENT
-  COACH
-  ADMIN
+// Enums
+enum Status {
+  open
+  in_progress
+  blocked
+  done
+  completed
+  wont_do
+  archived
+  deleted
 }
 
-enum ItemType {
-  NOTE
-  TASK
-  JOURNAL
-  DECISION
+enum ElementType {
+  task
+  decision
+  event
+  journal
+  note
+  coach_note
+  habit
+  bucket_list
 }
 
-enum ItemStatus {
-  NEW
-  REVIEWED
-  DONE
+enum ListType {
+  standard
+  bucket
+  smart
 }
 
-model User {
-  id          String       @id @default(cuid())
-  email       String       @unique
-  name        String?
-  role        Role         @default(PARENT)
-  password    String
-  createdAt   DateTime     @default(now())
+enum ProgressUnit {
+  percent
+  hours
+  count
+  points
+  custom
+}
 
-  memberships Membership[]
-  athletes    Athlete[]
+enum FeedVerb {
+  created
+  updated
+  status_changed
+  completed
+  deleted
+  restored
+  commented
+  linked
+}
+
+// Identity & hierarchy
+model Org {
+  id        Int      @id @default(autoincrement())
+  name      String
+  slug      String   @unique
+  timezone  String?
+
+  programs  Program[]
+  users     User[]
+  userOrgRoles UserOrgRole[]
+  tags         Tag[]
+  lists        List[]
+  feedItems    FeedItem[]
+  contacts     Contact[]
+  objectives   Objective[]
 }
 
 model Program {
-  id        String   @id @default(cuid())
-  name      String   @unique
-  createdAt DateTime @default(now())
+  id          Int      @id @default(autoincrement())
+  orgId       Int
+  name        String
+  description String?
 
-  teams     Team[]
+  org         Org      @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  teams       Team[]
+  planSteps   ProgramPlanStep[]
+  userProgramRoles UserProgramRole[]
 }
 
 model Team {
-  id          String       @id @default(cuid())
-  name        String       @unique
-  createdAt   DateTime     @default(now())
-  programId   String?
+  id        Int      @id @default(autoincrement())
+  programId Int?
+  name      String
+  color     String?
 
-  program     Program?     @relation(fields: [programId], references: [id], onDelete: Cascade)
-  memberships Membership[]
-  athletes    Athlete[]
-  events      Event[]
+  program   Program? @relation(fields: [programId], references: [id], onDelete: Cascade)
+  squads    Squad[]
+  members   UserTeamRole[]
 }
 
-model Membership {
-  id        String   @id @default(cuid())
-  userId    String
-  teamId    String
-  role      Role     @default(PARENT)
-  createdAt DateTime @default(now())
+model Squad {
+  id        Int      @id @default(autoincrement())
+  teamId    Int?
+  programId Int?
+  name      String
 
+  team      Team?    @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  userSquadRoles UserSquadRole[]
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  orgId        Int?
+  email        String   @unique
+  displayName  String?
+  tz           String?
+  createdAt    DateTime @default(now())
+
+  org          Org?     @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  orgRoles     UserOrgRole[]
+  programRoles UserProgramRole[]
+  teamRoles    UserTeamRole[]
+  squadRoles   UserSquadRole[]
+  createdElements Element[]
+  feedReadStates  FeedReadState[]
+}
+
+model UserOrgRole {
+  orgId Int
+  userId Int
+  role  String
+
+  org  Org  @relation(fields: [orgId], references: [id], onDelete: Cascade)
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([orgId, userId])
+}
+
+model UserProgramRole {
+  programId Int
+  userId    Int
+  role      String
+
+  program Program @relation(fields: [programId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([programId, userId])
+}
+
+model UserTeamRole {
+  teamId Int
+  userId Int
+  role   String
+
   team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, teamId])
+  @@id([teamId, userId])
 }
 
-model Athlete {
-  id        String   @id @default(cuid())
-  firstName String
-  lastName  String?
-  teamId    String?
-  parentId  String?
-  createdAt DateTime @default(now())
+model UserSquadRole {
+  squadId Int
+  userId  Int
+  role    String
 
-  team   Team? @relation(fields: [teamId], references: [id])
-  parent User? @relation(fields: [parentId], references: [id])
+  squad Squad @relation(fields: [squadId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([squadId, userId])
 }
 
-model Event {
-  id       String   @id @default(cuid())
-  teamId   String
-  team     Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  title    String
-  startsAt DateTime
-  endsAt   DateTime
-  location String?
-  notes    String?
+// Core element model
+model Element {
+  id                 Int       @id @default(autoincrement())
+  type               ElementType
+  title              String?
+  status             Status?
+  priority           Int?
+  quickRef           Boolean   @default(false)
+  quickCode          String?
+  createdBy          Int
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime?
+  deletedAt          DateTime?
+  listId             Int?
+  parentId           Int?
+  pinned             Boolean?
+  detailsJson        Json
+  startAt            DateTime?
+  dueAt              DateTime?
+  endAt              DateTime?
+  goalDate           DateTime?
+  locationName       String?
+  currentRevisionId  Int?
+  revNum             Int      @default(1)
+
+  creator            User     @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+  linksAsParent      ElementLink[] @relation("parentLinks")
+  linksAsChild       ElementLink[] @relation("childLinks")
+  tags               ElementTag[]
+  lists              ElementList[]
+  progressLogs       ProgressLog[]
+  progressRollup     ProgressRollup?
+  revisions          ElementRevision[]
+  calendarEvents     CalendarEvent[]
+  comments           Comment[]
+  attachments        Attachment[]
+  objectives         ElementObjectiveLink[]
 }
 
-model Note {
-  id        String   @id @default(cuid())
-  athleteId String?
-  text      String
-  createdAt DateTime @default(now())
-  mediaPath String?
-  type      ItemType  @default(NOTE)
-  status    ItemStatus @default(NEW)
-  tags      String?
-  dueDate   DateTime?
-  assignedTo String?
-  decisionRationale String?
-  decisionOutcome String?
-  updatedAt DateTime @updatedAt
-  version   Int      @default(1)
+model ElementLink {
+  id       Int    @id @default(autoincrement())
+  parentId Int
+  childId  Int
+  linkType String
 
-  mediaAttachments MediaAttachment[]
-
-  @@index([athleteId])
-  @@index([type, status])
+  parent Element @relation(fields: [parentId], references: [id], onDelete: Cascade, name: "parentLinks")
+  child  Element @relation(fields: [childId], references: [id], onDelete: Cascade, name: "childLinks")
+  @@index([parentId])
+  @@index([childId])
 }
 
-model MediaAttachment {
-  id         String   @id @default(cuid())
-  itemId     String? 
-  path       String
-  mime       String?
-  size       Int?
-  uploadedAt DateTime @default(now())
-  uploaderId String?
+model Tag {
+  id     Int    @id @default(autoincrement())
+  orgId  Int
+  name   String
+  color  String?
 
-  item Note? @relation(fields: [itemId], references: [id], onDelete: Cascade)
-
-  @@index([itemId])
+  org    Org    @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  elements ElementTag[]
 }
+
+model ElementTag {
+  elementId Int
+  tagId     Int
+
+  element Element @relation(fields: [elementId], references: [id], onDelete: Cascade)
+  tag     Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([elementId, tagId])
+}
+
+model List {
+  id        Int     @id @default(autoincrement())
+  orgId     Int
+  programId Int?
+  teamId    Int?
+  name      String
+  listType  ListType @default(standard)
+  sortIdx   Int?
+
+  org       Org     @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  elementMemberships ElementList[]
+}
+
+model ElementList {
+  elementId Int
+  listId    Int
+
+  element Element @relation(fields: [elementId], references: [id], onDelete: Cascade)
+  list    List    @relation(fields: [listId], references: [id], onDelete: Cascade)
+
+  @@id([elementId, listId])
+}
+
+// Progress
+model ProgressLog {
+  id        Int      @id @default(autoincrement())
+  elementId Int
+  at        DateTime @default(now())
+  unit      ProgressUnit
+  value     Float
+  target    Float?
+  note      String?
+
+  element   Element  @relation(fields: [elementId], references: [id], onDelete: Cascade)
+}
+
+model ProgressRollup {
+  id        Int    @id @default(autoincrement())
+  elementId Int    @unique
+  unit      String
+  current   Float
+  target    Float?
+
+  element   Element @relation(fields: [elementId], references: [id], onDelete: Cascade)
+}
+
+// Calendar
+model CalendarEvent {
+  id           Int      @id @default(autoincrement())
+  elementId    Int
+  startAt      DateTime
+  endAt        DateTime
+  locationName String?
+  recurrence   String?
+  visibility   String
+
+  element      Element  @relation(fields: [elementId], references: [id], onDelete: Cascade)
+  attendees    EventAttendee[]
+  resources    EventResource[]
+}
+
+model EventAttendee {
+  id         Int  @id @default(autoincrement())
+  calEventId Int
+  userId     Int?
+  contactId  Int?
+  rsvp       String?
+
+  calEvent   CalendarEvent @relation(fields: [calEventId], references: [id], onDelete: Cascade)
+}
+
+model CalendarResource {
+  id   Int    @id @default(autoincrement())
+  name String
+  type String
+  resources EventResource[]
+}
+
+model EventResource {
+  calEventId Int
+  resourceId Int
+
+  calEvent CalendarEvent @relation(fields: [calEventId], references: [id], onDelete: Cascade)
+  resource CalendarResource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+
+  @@id([calEventId, resourceId])
+}
+
+// Feed / audit
+model FeedItem {
+  id          Int      @id @default(autoincrement())
+  orgId       Int
+  actorUserId Int
+  verb        FeedVerb
+  objectType  String
+  objectId    Int
+  targetType  String?
+  targetId    Int?
+  ts          DateTime @default(now())
+  payload     Json
+
+  org         Org      @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  readStates  FeedReadState[]
+}
+
+model FeedReadState {
+  feedId Int
+  userId Int
+  readAt DateTime?
+
+  feed  FeedItem @relation(fields: [feedId], references: [id], onDelete: Cascade)
+  user  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([feedId, userId])
+}
+
+// People, places, collaboration
+model Contact {
+  id      Int    @id @default(autoincrement())
+  orgId   Int
+  name    String
+  email   String?
+  phone   String?
+  notes   String?
+
+  org     Org    @relation(fields: [orgId], references: [id], onDelete: Cascade)
+}
+
+model Location {
+  id      Int    @id @default(autoincrement())
+  name    String
+  address String?
+  geo     Json?
+}
+
+model Comment {
+  id           Int      @id @default(autoincrement())
+  elementId    Int
+  authorUserId Int
+  bodyMd       String
+  createdAt    DateTime @default(now())
+  parentId     Int?
+
+  element      Element  @relation(fields: [elementId], references: [id], onDelete: Cascade)
+}
+
+model Attachment {
+  id           Int    @id @default(autoincrement())
+  elementId    Int
+  name         String
+  mime         String
+  sizeBytes    Int
+  urlOrPath    String
+
+  element      Element @relation(fields: [elementId], references: [id], onDelete: Cascade)
+}
+
+// Objectives / OKR
+model Objective {
+  id           Int    @id @default(autoincrement())
+  orgId        Int
+  title        String
+  ownerUserId  Int?
+  horizon      String
+
+  org          Org    @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  keyResults   KeyResult[]
+  elementLinks ElementObjectiveLink[]
+}
+
+model KeyResult {
+  id          Int    @id @default(autoincrement())
+  objectiveId Int
+  label       String
+  metric      String
+  target      Float
+  current     Float?
+
+  objective   Objective @relation(fields: [objectiveId], references: [id], onDelete: Cascade)
+}
+
+model ElementObjectiveLink {
+  elementId   Int
+  objectiveId Int
+
+  element     Element   @relation(fields: [elementId], references: [id], onDelete: Cascade)
+  objective   Objective @relation(fields: [objectiveId], references: [id], onDelete: Cascade)
+
+  @@id([elementId, objectiveId])
+}
+
+// Version control / revisions
+model ElementRevision {
+  id                 Int      @id @default(autoincrement())
+  elementId          Int
+  revNum             Int
+  parentRevisionId   Int?
+  changedBy          Int
+  changedAt          DateTime @default(now())
+  changeNote         String?
+  branch             String?
+  snapshot           Json
+
+  element            Element  @relation(fields: [elementId], references: [id], onDelete: Cascade)
+  patches            ElementPatch[]
+}
+
+model ElementPatch {
+  id          Int    @id @default(autoincrement())
+  revisionId  Int
+  op          String
+  patchJson   Json
+
+  revision    ElementRevision @relation(fields: [revisionId], references: [id], onDelete: Cascade)
+}
+
+// Prompts & programs
+model PromptSet {
+  id    Int    @id @default(autoincrement())
+  name  String
+  scope String
+  prompts Prompt[]
+}
+
+model Prompt {
+  id          Int    @id @default(autoincrement())
+  promptSetId Int
+  title       String
+  bodyMd      String
+
+  promptSet   PromptSet @relation(fields: [promptSetId], references: [id], onDelete: Cascade)
+}
+
+model ProgramPlanStep {
+  id        Int    @id @default(autoincrement())
+  programId Int
+  title     String
+  descr     String?
+
+  program   Program @relation(fields: [programId], references: [id], onDelete: Cascade)
+}
+
+// Indexing/view hints can be added via @@index where needed
+

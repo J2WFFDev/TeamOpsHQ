@@ -5,7 +5,7 @@ import { createEvent } from './actions'
 type ActionResult = { ok?: boolean; error?: string }
 type ActionFn = (...args: unknown[]) => Promise<ActionResult | undefined>
 
-export default function ClientCreateEventForm({ teams }: { teams: { id: string; name: string }[] }) {
+export default function ClientCreateEventForm({ teams }: { teams: { id: number; name: string }[] }) {
   const [stateRaw, formAction] = React.useActionState(createEvent as ActionFn, null)
   const state = stateRaw as ActionResult | undefined
   const now = new Date().toISOString().slice(0,16) // yyyy-MM-ddTHH:mm

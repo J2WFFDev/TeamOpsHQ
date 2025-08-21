@@ -1,15 +1,15 @@
 import { prisma } from '@/lib/prisma'
-import type { Event, Team } from '@prisma/client'
+import type { Team, CalendarEvent } from '@prisma/client'
 import ClientCreateEventForm from './ClientCreateEventForm'
 import QuickNote from '@/components/QuickNote'
 
 export const dynamic = 'force-dynamic'
 
-async function getData(): Promise<{ teams: Team[]; events: (Event & { team: Team })[] }> {
+async function getData(): Promise<{ teams: Team[]; events: (CalendarEvent & { element: any })[] }> {
   const teams = await prisma.team.findMany({ orderBy: { name: 'asc' } })
-  const events = await prisma.event.findMany({
-    include: { team: true },
-    orderBy: [{ startsAt: 'asc' }]
+  const events = await prisma.calendarEvent.findMany({
+    include: { element: true },
+    orderBy: [{ startAt: 'asc' }]
   })
   return { teams, events }
 }
@@ -30,11 +30,11 @@ export default async function EventsPage() {
       <div className="bg-white rounded-xl shadow p-4">
         <h2 className="font-semibold mb-3">Upcoming</h2>
         <ul className="divide-y">
-          {events.map((ev: Event & { team: Team }) => (
+          {events.map((ev: CalendarEvent & { element: any }) => (
             <li key={ev.id} className="py-2">
-              <div className="font-medium">{ev.title}</div>
+              <div className="font-medium">{ev.element?.title ?? 'Untitled'}</div>
               <div className="text-sm text-gray-600">
-                Team: {ev.team.name} • {new Date(ev.startsAt).toLocaleString()} – {new Date(ev.endsAt).toLocaleString()} {ev.location ? `• ${ev.location}` : ''}
+                {new Date(ev.startAt).toLocaleString()} – {new Date(ev.endAt).toLocaleString()} {ev.locationName ? `• ${ev.locationName}` : ''}
               </div>
             </li>
           ))}

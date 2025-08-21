@@ -1,0 +1,187 @@
+**Goal:** Flip your current dark theme to a crisp light theme with the same layout, spacing, and components.
+
+# Direct Answer
+
+Quick preference check before I hand you step-by-step/code:
+
+1. Accent color (default `#2563eb` blue)?
+2. White (`#fff`) or off-white background (`#f8fafc`)?
+3. Keep rounded-2xl cards and thin borders, or go flatter?
+
+Meanwhile, here’s a drop-in light preset you can paste now (works with your existing Next.js + TS + Tailwind scaffold).
+
+# Reasoning Summary
+
+I swapped tokens only (colors, shadows) and avoided extra deps so you’re not fighting installs. The component structure stays identical; placeholders switch from “white on dark” to “black on light.” This keeps your Framer-style cards, pill CTAs, and soft glow—just inverted for light.
+
+# Alternatives / Trade-offs
+
+* **Neutral light (below):** safe for dashboards and marketing.
+* **Warm light (amber/rose accents):** friendlier but can reduce contrast.
+* **High-contrast light (near-black text, fewer shadows):** most legible, least “buttery.”
+
+# Action Plan (pasteable changes)
+
+> All paths assume the scaffold from my previous message. No plugins required.
+
+**1) `tailwind.config.ts` – replace `extend.colors` and shadows**
+
+```ts
+import type { Config } from "tailwindcss";
+
+export default {
+  darkMode: ["class"],
+  content: ["./src/**/*.{ts,tsx}", "./app/**/*.{ts,tsx}"],
+  theme: {
+    container: { center: true, padding: "1rem" },
+    extend: {
+      colors: {
+        background: "#ffffff",
+        foreground: "#0b0f19",  // near slate-950 for crisp text
+        card: "#ffffff",
+        muted: "#f5f7fb",       // very light gray for muted surfaces
+        border: "#e5e7eb",      // light border
+        ring: "#111827",
+        accent: "#2563eb"       // blue-600 (change if you prefer)
+      },
+      fontFamily: {
+        sans: ["Inter", "Segoe UI", "system-ui", "Roboto", "Arial"]
+      },
+      borderRadius: {
+        xl: "1.25rem",
+        "2xl": "1.75rem",
+        "3xl": "2rem",
+        pill: "9999px"
+      },
+      boxShadow: {
+        soft: "inset 0 1px 0 rgba(255,255,255,0.8), 0 10px 30px rgba(2,6,23,0.08)",
+        glow: "0 0 120px 40px rgba(37,99,235,0.08)" // subtle blue halo
+      }
+    }
+  },
+  plugins: [] // keep empty unless you've installed extras
+} satisfies Config;
+```
+
+**2) `app/globals.css` – flip scheme, keep utilities**
+
+```css
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root { color-scheme: light; }
+body  { @apply bg-background text-foreground antialiased; }
+
+/* Reusable cards/surfaces */
+.surface {
+  @apply rounded-2xl border border-border bg-card shadow-soft;
+}
+
+/* Buttons */
+.btn { @apply inline-flex items-center gap-2 rounded-pill px-5 py-2.5 text-sm font-medium transition will-change-transform; }
+.btn-primary { @apply bg-accent text-white hover:opacity-90 active:scale-[.99]; }
+.btn-ghost   { @apply bg-transparent text-foreground border border-border hover:bg-muted; }
+
+/* Light-theme vignette/glow in hero */
+.vignette {
+  position: absolute; inset: -20vh 0 auto 0; height: 60vh; pointer-events: none;
+  background: radial-gradient(60% 50% at 50% 10%, rgba(37,99,235,.12), transparent 60%);
+  filter: blur(40px);
+}
+```
+
+**3) `app/page.tsx` – minor class tweaks for placeholders**
+*Replace the entire file with this light-tuned version (only the “placeholder blocks” changed from `bg-white/10`/`bg-white/5` → `bg-black/5`).*
+
+```tsx
+export default function Page() {
+  return (
+    <main className="relative">
+      {/* Hero */}
+      <section className="relative overflow-hidden">
+        <div className="vignette" />
+        <div className="container max-w-6xl pt-24 pb-16 md:pt-32 md:pb-24">
+          <h1 className="tracking-tight text-5xl md:text-7xl font-semibold leading-[1.05]">
+            The design tool with <span className="opacity-90">publishing powers</span>
+          </h1>
+          <p className="mt-6 max-w-2xl text-neutral-700 text-lg">
+            A true design canvas with a production-ready system. Not just a visual HTML editor.
+          </p>
+          <div className="mt-8 flex flex-wrap gap-3">
+            <a className="btn btn-primary" href="#">Start for free</a>
+            <a className="btn btn-ghost" href="#">Watch video</a>
+          </div>
+
+          {/* Hero “UI preview” card row */}
+          <div className="mt-14 grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div className="surface p-5 min-h-[220px]">
+              <div className="h-6 w-28 rounded-full bg-black/5 mb-4" />
+              <div className="grid grid-cols-3 gap-3">
+                {[...Array(9)].map((_, i) => (
+                  <div key={i} className="aspect-square rounded-xl bg-black/5 border border-border" />
+                ))}
+              </div>
+            </div>
+            <div className="surface p-5 min-h-[220px]">
+              <div className="h-6 w-40 rounded-full bg-black/5 mb-4" />
+              <div className="space-y-3">
+                <div className="h-10 rounded-xl bg-black/5 border border-border" />
+                <div className="h-10 rounded-xl bg-black/5 border border-border" />
+                <div className="h-10 rounded-xl bg-black/5 border border-border" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Contact + Callouts */}
+      <section className="container max-w-6xl pb-28">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Contact form card */}
+          <div className="surface p-6 md:col-span-2">
+            <div className="text-xl font-semibold mb-1">Talk to sales</div>
+            <div className="text-neutral-700 mb-6">Let’s help your team build better.</div>
+
+            <form className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <input className="surface bg-transparent px-4 py-3" placeholder="Name" />
+              <input className="surface bg-transparent px-4 py-3" placeholder="Email" />
+              <input className="surface bg-transparent px-4 py-3" placeholder="Company" />
+              <input className="surface bg-transparent px-4 py-3" placeholder="Country" />
+              <textarea className="surface bg-transparent px-4 py-3 md:col-span-2" rows={4}
+                        placeholder="How can we help?" />
+              <div className="md:col-span-2 pt-2">
+                <button className="btn btn-primary">Get in touch</button>
+              </div>
+            </form>
+          </div>
+
+          {/* Callout stack */}
+          <div className="grid grid-cols-1 gap-6">
+            {[
+              { title: "Get demo", body: "Discover how this empowers your team." },
+              { title: "Enterprise trial", body: "Simplify your workflow." },
+              { title: "Custom solutions", body: "Tailored to your goals." },
+            ].map((c) => (
+              <div key={c.title} className="surface p-6">
+                <div className="text-lg font-medium">{c.title}</div>
+                <div className="text-neutral-700 mt-1">{c.body}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    </main>
+  );
+}
+```
+
+**4) Run it**
+
+```powershell
+# from project root
+npm run dev
+# open http://localhost:3000
+```
+
+When you confirm the three preferences (accent/white-vs-off-white/radius), I’ll lock the tokens, generate a light+dark toggle (system-aware), and—if you want—prep a MySQL-backed page so the theme wraps real data.

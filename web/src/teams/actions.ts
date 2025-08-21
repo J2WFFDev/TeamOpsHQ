@@ -10,11 +10,13 @@ const createTeamSchema = z.object({
 })
 
 export async function createTeam(prevState: unknown, formData: FormData) {
-  const programId = String(formData.get('programId') || '')
+  const programIdRaw = String(formData.get('programId') || '')
+  const programId = Number(programIdRaw)
   const name = String(formData.get('name') || '')
   const parsed = createTeamSchema.safeParse({ programId, name })
   if (!parsed.success) return { error: 'Invalid input' }
   try {
+    if (Number.isNaN(programId)) return { error: 'Invalid program id' }
     await prisma.team.create({ data: { programId, name } })
     revalidatePath('/teams')
     return { ok: true }

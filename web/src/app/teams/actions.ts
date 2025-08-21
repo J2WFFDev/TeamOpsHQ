@@ -5,17 +5,19 @@ import { z } from 'zod'
 import { revalidatePath } from 'next/cache'
 
 const createTeamSchema = z.object({
-  programId: z.string().min(1),
+  programId: z.string().optional(),
   name: z.string().min(2).max(80),
 })
 
 export async function createTeam(prevState: unknown, formData: FormData) {
-  const programId = String(formData.get('programId') || '')
+  const programIdRaw = String(formData.get('programId') || '')
+  const programId = programIdRaw ? parseInt(programIdRaw, 10) : null
   const name = String(formData.get('name') || '')
-  const parsed = createTeamSchema.safeParse({ programId, name })
+  const parsed = createTeamSchema.safeParse({ programId: programIdRaw || undefined, name })
   if (!parsed.success) return { error: 'Invalid input' }
   try {
-    await prisma.team.create({ data: { programId, name } })
+    const p = (await import('@/lib/getPrisma')).getPrisma()
+    await p.team.create({ data: { programId: programId ?? undefined, name } })
     revalidatePath('/teams')
     return { ok: true }
   } catch (e: unknown) {

@@ -5,7 +5,7 @@ import { createTeam } from './actions'
 type ActionResult = { ok?: boolean; error?: string }
 type ActionFn = (...args: unknown[]) => Promise<ActionResult | undefined>
 
-export default function ClientCreateTeamForm({ programs }: { programs: { id: string; name: string }[] }) {
+export default function ClientCreateTeamForm({ programs }: { programs: { id: number; name: string }[] }) {
   const [stateRaw, formAction] = React.useActionState(createTeam as ActionFn, null)
   const state = stateRaw as ActionResult | undefined
   return (

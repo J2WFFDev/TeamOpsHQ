@@ -4,6 +4,7 @@ export type CreateNotePayload = {
   athleteId?: string | null
   text?: string
   noteCreatedAt?: number
+  elementLocalId?: number
   attachmentId?: number
   mediaPath?: string
 }
@@ -26,9 +27,9 @@ export async function drainPendingActions(batchSize = 20) {
     try {
       const payload = (a.payload || {}) as CreateNotePayload
       if (payload?.attachmentId) {
-        // fetch attachment from IndexedDB
-        const att = await db.mediaAttachments.get(payload.attachmentId)
-        if (att && att.blob && !att.uploaded) {
+  // fetch attachment from IndexedDB
+  const att = await db.attachments.get(payload.attachmentId)
+  if (att && att.blob && !att.uploaded) {
           try {
             const form = new FormData()
             form.append('file', att.blob as Blob, att.name || 'upload.jpg')
@@ -38,8 +39,8 @@ export async function drainPendingActions(batchSize = 20) {
               const j = await up.json()
               // expect { mediaPath: '/uploads/...' }
               if (j?.mediaPath) {
-                // mark attachment uploaded and store mediaPath
-                await db.mediaAttachments.update(att.id!, { uploaded: true, mediaPath: j.mediaPath })
+    // mark attachment uploaded and store mediaPath
+    await db.attachments.update(att.id!, { uploaded: true, mediaPath: j.mediaPath })
                 payload.mediaPath = j.mediaPath
                 // remove attachmentId from payload to avoid re-upload
                 delete payload.attachmentId
@@ -51,8 +52,8 @@ export async function drainPendingActions(batchSize = 20) {
           }
         } else if (att?.uploaded && att?.mediaPath) {
           // already uploaded: attach the mediaPath
-          payload.mediaPath = att.mediaPath
-          delete payload.attachmentId
+    payload.mediaPath = att.mediaPath
+    delete payload.attachmentId
         }
       }
     } catch (err) {
@@ -82,9 +83,9 @@ export async function drainPendingActions(batchSize = 20) {
 export async function markNotesSyncedByActionCreatedAt(actionCreatedAtList: number[]) {
   if (!actionCreatedAtList?.length) return
   for (const createdAt of actionCreatedAtList) {
-    const note = await db.notes.where('createdAt').equals(createdAt).first()
-    if (note?.id) {
-      await db.notes.update(note.id, { synced: true })
+    const el = await db.elements.where('createdAt').equals(createdAt).first()
+    if (el?.id) {
+      await db.elements.update(el.id, { synced: true })
     }
   }
 }

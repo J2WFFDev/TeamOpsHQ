@@ -2,54 +2,53 @@
 import { prisma } from "@/lib/prisma";
 
 async function main() {
-  // Team
-  const team = await prisma.team.upsert({
-    where: { name: "Rifle A" },
+  // Org
+  const org = await prisma.org.upsert({
+    where: { slug: "rifle-org" },
     update: {},
-    create: { name: "Rifle A" },
+    create: { name: "Rifle Org", slug: "rifle-org", timezone: "UTC" },
   });
 
-  // User (parent)
+  // User
   const user = await prisma.user.upsert({
     where: { email: "parent@example.com" },
     update: {},
-      create: {
-      email: "parent@example.com",
-      name: "Pat Parent",
-      role: 'PARENT',
-      password: "hashed_dummy", // TODO: replace with real hash later
-    },
-  });
-
-  // Membership (unique on [userId, teamId])
-  await prisma.membership.upsert({
-    where: { userId_teamId: { userId: user.id, teamId: team.id } },
-    update: {},
-  create: { userId: user.id, teamId: team.id, role: 'PARENT' },
-  });
-
-  // Athlete
-  await prisma.athlete.upsert({
-    where: { id: "seed-athlete-1" },
-    update: {},
     create: {
-      id: "seed-athlete-1",
-      firstName: "Alex",
-      lastName: "Sharps",
-      teamId: team.id,
-      parentId: user.id,
+      email: "parent@example.com",
+      displayName: "Pat Parent",
+      orgId: org.id,
+      tz: "UTC",
     },
   });
 
-  // Event
-  await prisma.event.create({
+  // Team (find or create)
+  let team = await prisma.team.findFirst({ where: { name: "Rifle A" } });
+  if (!team) {
+    team = await prisma.team.create({ data: { name: "Rifle A", color: "blue", programId: null } });
+  }
+
+  // Sample Element (task)
+  const element = await prisma.element.create({
     data: {
-      teamId: team.id,
-      title: "Practice",
-      startsAt: new Date(Date.now() + 60 * 60 * 1000),
-      endsAt: new Date(Date.now() + 2 * 60 * 60 * 1000),
-      location: "Range 1",
-      notes: "Bring eye/ear protection",
+      type: "task",
+      title: "Seed Task: Check gear",
+      status: "open",
+      priority: 2,
+      quickRef: false,
+      createdBy: user.id,
+      detailsJson: { $type: "task", $v: 1, assignees: [], checklist: [] },
+    },
+  });
+
+  // CalendarEvent for the element
+  await prisma.calendarEvent.create({
+    data: {
+      elementId: element.id,
+      startAt: new Date(Date.now() + 60 * 60 * 1000),
+      endAt: new Date(Date.now() + 2 * 60 * 60 * 1000),
+      locationName: "Range 1",
+      recurrence: null,
+      visibility: "team",
     },
   });
 
