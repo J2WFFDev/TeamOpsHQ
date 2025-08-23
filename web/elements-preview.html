@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Elements Page Preview</title>
+    <style>
+        :root {
+            --foreground: #1f2937;
+            --background: #ffffff;
+            --muted: #f3f4f6;
+            --border: #e5e7eb;
+            --accent: #3b82f6;
+        }
+        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #f9fafb; margin: 0; padding: 20px; }
+        .container { max-width: 1000px; margin: 0 auto; }
+        h1 { color: var(--foreground); font-size: 30px; font-weight: 600; margin-bottom: 32px; letter-spacing: -0.02em; }
+        .card { background: white; border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); padding: 32px; margin-bottom: 32px; }
+        h2 { font-size: 20px; font-weight: 600; margin-bottom: 24px; color: var(--foreground); }
+        .tabs { display: flex; gap: 8px; background: var(--muted); padding: 8px; border-radius: 12px; margin-bottom: 24px; }
+        .tab { background: none; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 500; transition: all 200ms ease; }
+        .tab:hover { background: rgba(255,255,255,0.5); }
+        .tab.active { background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .form-group { margin-bottom: 24px; }
+        .form-label { display: block; font-size: 14px; font-weight: 500; color: var(--foreground); opacity: 0.8; margin-bottom: 8px; }
+        .form-input { width: 100%; padding: 12px 16px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; background: var(--background); box-shadow: 0 1px 3px rgba(0,0,0,0.05); transition: all 200ms ease; }
+        .form-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+        .form-textarea { min-height: 140px; resize: vertical; }
+        .btn { padding: 12px 24px; border-radius: 8px; border: none; cursor: pointer; font-size: 14px; font-weight: 500; transition: all 200ms ease; }
+        .btn-primary { background: var(--accent); color: white; }
+        .btn-primary:hover { background: #2563eb; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .task-list { margin-top: 24px; }
+        .task-row { display: flex; align-items: center; padding: 16px 20px; border-radius: 12px; margin-bottom: 8px; transition: all 200ms ease; border: 1px solid transparent; }
+        .task-row:hover { background: var(--muted); border-color: var(--border); box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+        .task-checkbox { width: 22px; height: 22px; border-radius: 6px; border: 2px solid var(--border); margin-right: 16px; display: flex; align-items: center; justify-content: center; cursor: pointer; background: var(--background); transition: all 200ms ease; flex-shrink: 0; }
+        .task-checkbox:hover { border-color: var(--accent); background: var(--muted); transform: scale(1.05); }
+        .task-checkbox.checked { background: var(--accent); border-color: var(--accent); color: white; }
+        .task-content { flex: 1; }
+        .task-title { font-size: 16px; color: var(--foreground); cursor: text; line-height: 1.4; font-weight: 500; margin-bottom: 4px; }
+        .task-meta { font-size: 13px; color: var(--foreground); opacity: 0.7; display: flex; gap: 10px; align-items: center; }
+        .priority-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+        .priority-medium { background: #f59e0b; }
+        .priority-high { background: #ef4444; }
+        .priority-low { background: #10b981; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div style="display: flex; align-items: center; justify-between; margin-bottom: 32px;">
+            <h1>Elements</h1>
+        </div>
+        
+        <div class="card">
+            <h2>Create Element</h2>
+            
+            <div class="tabs">
+                <button class="tab">Note</button>
+                <button class="tab">Event</button>
+                <button class="tab">Task</button>
+                <button class="tab">Journal</button>
+                <button class="tab">Decision</button>
+                <button class="tab active">Coach Note</button>
+                <button class="tab">Habit</button>
+                <button class="tab">Bucket List</button>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Title</label>
+                <input class="form-input" placeholder="Enter a title..." value="" />
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Content</label>
+                <textarea class="form-input form-textarea" placeholder="Write something..."></textarea>
+            </div>
+            
+            <button class="btn btn-primary">Create Element</button>
+        </div>
+        
+        <div class="card">
+            <div style="display: flex; align-items: center; justify-between; margin-bottom: 24px;">
+                <h2 style="margin-bottom: 0;">Recent Elements</h2>
+                <span style="font-size: 14px; color: var(--foreground); opacity: 0.6;">4 items</span>
+            </div>
+            
+            <div class="task-list">
+                <div class="task-row">
+                    <div class="task-checkbox">✓</div>
+                    <div class="task-content">
+                        <div class="task-title">Team retrospective discussion</div>
+                        <div class="task-meta">
+                            <span class="priority-dot priority-medium"></span>
+                            <span>task</span>
+                            <span>•</span>
+                            <span>Aug 20, 2025</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="task-row">
+                    <div class="task-checkbox"></div>
+                    <div class="task-content">
+                        <div class="task-title">Weekly team check-in with coaching feedback</div>
+                        <div class="task-meta">
+                            <span class="priority-dot priority-high"></span>
+                            <span>coach_note</span>
+                            <span>•</span>
+                            <span>Aug 22, 2025</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="task-row">
+                    <div class="task-checkbox"></div>
+                    <div class="task-content">
+                        <div class="task-title">Project planning meeting</div>
+                        <div class="task-meta">
+                            <span class="priority-dot priority-low"></span>
+                            <span>event</span>
+                            <span>•</span>
+                            <span>Aug 21, 2025</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="task-row">
+                    <div class="task-checkbox"></div>
+                    <div class="task-content">
+                        <div class="task-title">Daily reflection on team dynamics</div>
+                        <div class="task-meta">
+                            <span class="priority-dot priority-medium"></span>
+                            <span>journal</span>
+                            <span>•</span>
+                            <span>Aug 19, 2025</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

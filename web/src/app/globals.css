@@ -2,39 +2,208 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Theme tokens (light preset from docs/example theme) */
+:root { color-scheme: light; }
 :root {
-  --background: #f8fafc; /* light slate */
-  --foreground: #0f172a; /* slate-900 */
-  --primary: #0ea5a4; /* teal-500 */
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --background: #ffffff;
+  --foreground: #0b0f19; /* near slate-950 */
+  --card: #ffffff;
+  --muted: #f5f7fb;
+  --border: #e5e7eb;
+  --ring: #111827;
+  --accent: #2563eb; /* blue-600 */
+  --radius-xl: 1.25rem;
+  --radius-2xl: 1.75rem;
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  /* intentionally left blank - system dark still allowed */
+}
+
+/* Dark theme overrides when .dark class is present on <html> */
+.dark {
+  --background: #061024;
+  --foreground: #e6eef8;
+  --card: #071028;
+  --muted: #071426;
+  --border: #0f1724;
+  --ring: #93c5fd;
+  --accent: #60a5fa; /* lighter blue for dark */
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+  font-family: Inter, 'Segoe UI', system-ui, Roboto, Arial;
 }
 
-/* Conservative default for buttons so the primary color shows immediately
-   (components that use specific Tailwind color classes will not be affected).
-   This helps preview a theme without changing many components. */
-button {
-  background-color: var(--primary);
-  color: white;
-  border: none;
-  padding: 0.5rem 0.75rem;
-  border-radius: 0.375rem;
+/* Reusable card surface */
+.surface {
+  border-radius: 1.75rem; /* 2xl */
+  border: 1px solid var(--border);
+  background: var(--card);
+  box-shadow: 0 10px 30px rgba(2,6,23,0.08); /* soft */
 }
+
+/* Card helpers for list rows */
+.bg-card { background: var(--card); }
+.card-elevated { box-shadow: 0 12px 36px rgba(2,6,23,0.14); border-radius: 0.75rem; }
+
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 9999px;
+  padding: 0.625rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 160ms ease;
+}
+.btn-primary { background: var(--accent); color: white; }
+.btn-ghost { background: transparent; color: var(--foreground); border: 1px solid var(--border); }
+.btn-ghost { background: transparent; color: var(--foreground); border: 1px solid var(--border); }
+
+/* TickTick-style task interface */
+.task-row {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  padding: 16px 20px;
+  border-radius: 12px;
+  transition: all 200ms ease;
+  border: 1px solid transparent;
+}
+.task-row + .task-row { margin-top: 8px; }
+.task-row:hover { 
+  background: var(--muted); 
+  border-color: var(--border);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+.task-checkbox {
+  width: 22px; 
+  height: 22px; 
+  border-radius: 6px; 
+  border: 2px solid var(--border); 
+  display: inline-flex; 
+  align-items: center;
+  justify-content: center;
+  background: var(--background); 
+  cursor: pointer; 
+  transition: all 200ms ease;
+  flex-shrink: 0;
+}
+.task-checkbox:hover { 
+  border-color: var(--accent); 
+  background: var(--muted); 
+  transform: scale(1.05);
+}
+.task-checkbox[aria-checked="true"] { 
+  background: var(--accent); 
+  border-color: var(--accent); 
+}
+.task-checkbox[aria-checked="true"]::after { 
+  content: '✓'; 
+  color: white; 
+  font-size: 14px; 
+  font-weight: 600;
+}
+.task-title { 
+  font-size: 16px; 
+  color: var(--foreground); 
+  line-height: 1.4;
+  font-weight: 500;
+}
+.task-meta { 
+  font-size: 13px; 
+  color: var(--foreground); 
+  opacity: 0.7;
+  display: flex; 
+  gap: 10px; 
+  align-items: center;
+}
+
+.priority-dot { 
+  width: 10px; 
+  height: 10px; 
+  border-radius: 50%; 
+  display: inline-block;
+  flex-shrink: 0;
+}
+.priority-low { background: #10b981; }
+.priority-medium { background: #f59e0b; }
+.priority-high { background: #ef4444; }
+
+.task-date { 
+  color: var(--foreground); 
+  opacity: 0.7; 
+  font-size: 13px; 
+  transition: all 200ms ease;
+}
+
+.card-elevated { box-shadow: 0 10px 30px rgba(2,6,23,0.08); }
+
+/* Navigation-matching form styling */
+.nav-style-input {
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--background);
+  color: var(--foreground);
+  font-size: 14px;
+  transition: all 200ms ease;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+.nav-style-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.nav-style-button {
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 14px;
+  transition: all 200ms ease;
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+.nav-style-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+/* Card styling to match navigation */
+.nav-style-card {
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  padding: 24px;
+}
+
+/* Vignette helper used in docs preview */
+.vignette { position: absolute; inset: -20vh 0 auto 0; height: 60vh; pointer-events: none; background: radial-gradient(60% 50% at 50% 10%, rgba(37,99,235,.12), transparent 60%); filter: blur(40px); }
+
+/* Spinner for pending items */
+.spin { width: 14px; height: 14px; border-radius: 9999px; border: 2px solid rgba(0,0,0,0.08); border-top-color: var(--accent); animation: spin 800ms linear infinite; display: inline-block; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Pending / retry UI */
+.pending-badge { color: #b45309; font-weight: 600; font-size: 0.75rem; }
+.retry-btn { font-size: 0.875rem; color: var(--accent); text-decoration: underline; cursor: pointer; }
+
+/* Header / nav link helpers */
+.nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  color: var(--foreground);
+  text-decoration: none;
+}
+.nav-link:hover { background: var(--muted); }
+.nav-link:active, .nav-link[aria-current='page'] { box-shadow: inset 0 -2px 0 var(--accent); }

@@ -12,7 +12,7 @@ describe('server actions', () => {
 
   it('createEvent returns ok when input is valid', async () => {
     const form = new FormData()
-    form.append('teamId', 't1')
+  form.append('teamId', '1')
     form.append('title', 'Practice')
     form.append('startsAt', new Date().toISOString())
     form.append('endsAt', new Date(Date.now() + 3600_000).toISOString())
